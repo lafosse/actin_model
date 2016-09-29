@@ -4,15 +4,18 @@ Created on Wed Sep 21 09:36:07 2016
 
 @author: lafosse
 """
+import time
+tic = time.time();
 
 import numpy as np
+from matplotlib import path
 
 # define dictionary to store all parameters
 params = {
 'time':1000,
 'tstep':0.01,
-'motors':5000,
 'filaments':1000,
+'motors':5000,
 
 # filament parameters
 'fil_length':1.0, #filament length
@@ -53,32 +56,54 @@ Z = np.zeros((5,params['filaments']))
 #    Z(4,:) = Z(1,:) - (fil_length * cos(Z(3,:)))
 #    Z(5,:) = Z(2,:) - (fil_length * sin(Z(3,:)))
 
-# init_vals = init(J,X,Z) #init.py called to evaluate initial conditions
-# init_vals = list of lists (i.e. [[J], [X], [Z]] )
-
-
-def init(J,X,Z):
-    horizontal_radius = 2.0
-    vertical_radius = 2.0
-    x_poly = horizontal_radius*np.array([-1,1,1,-1,-1])
-    y_poly = vertical_radius*np.array([1,1,-1,-1,1])
-    boundary = np.pi*np.array([.75,.25,-.25,-.75,-1.25])
+def initialize_positions(J,X,Z):
+    boundary_height = 2.0;
+    boundary_width = 2.0;
+    boundary = path.Path([(-1*boundary_width,-1*boundary_height),
+                          (-1*boundary_width,boundary_height),
+                          (boundary_width,boundary_height),
+                          (boundary_width,-1*boundary_height)],
+                          readonly=True)
+#    boundary = np.pi*np.array([.75,.25,-.25,-.75,-1.25])
     
-    for i in range(1,params['filaments'])
-        while 1
-            x = horizontal_radius*rand;
-            y = vertical_radius*rand;
-            if (inpolygon(x,y,xpol,ypol)) == 1
-                Z(1,i) = x;
-                Z(2,i) = y;
-                break;
-        
+    # assign random positions to plus ends of filaments
+    for i in range(0,params['filaments']):
+        while 1:
+            x_plus_end = boundary_width*np.random.uniform();
+            y_plus_end = boundary_height*np.random.uniform();
+            # check if plus ends of filament are within boundary
+            if boundary.contains_point(np.array([x_plus_end,y_plus_end])):
+                Z[0,i] = x_plus_end;
+                Z[1,i] = y_plus_end;
+                while 1:
+                    angle = 2*np.pi*np.random.uniform();
+                    x_minus_end = x_plus_end-params['fil_length']*np.cos(angle);
+                    y_minus_end = y_plus_end-params['fil_length']*np.sin(angle);
+                    # check if minus ends of filament are within boundary
+                    if boundary.contains_point(np.array([x_minus_end,y_minus_end])):
+                        Z[2,i] = angle;
+                        Z[3,i] = x_minus_end;
+                        Z[4,i] = y_minus_end;
+                        break
+                break
+            
+    # assign random positions to motors       
+    for j in range(0,params['motors']):
+        while 1:
+            x = boundary_width*np.random.uniform();
+            y = boundary_height*np.random.uniform();
+            if boundary.contains_point(np.array([x,y])):
+                X[0,j] = x;
+                X[1,j] = y;
+                break            
+            
+    return J,X,Z
+ 
+J,X,Z = initialize_positions(J,X,Z)
 
-    return
 
 
-
-
+toc = time.time() - tic;
 '''
 write/plot initial data
 '''
