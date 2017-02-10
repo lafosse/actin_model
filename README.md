@@ -1,2 +1,2 @@
 # actin_model
-A dynamic actin/myosin model
+A dynamic, particle-based actomyosin model observing phagocytic cup formation
